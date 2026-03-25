@@ -1,28 +1,18 @@
 import { NextRequest } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getRecentWorkouts } from '@/lib/supabase'
+import { PERSONAS, PersonaKey } from '@/lib/personas'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 })
-
-const COACH_SYSTEM_PROMPT = `You are an expert strength coach analyzing workout history.
-
-Your job:
-1. Identify patterns: frequency (how often per muscle group), intensity (RPE, max reps), volume trends
-2. Spot weak points: exercises with low frequency, stalled progression, imbalances
-3. Assess recovery state: accumulated fatigue, CNS burnout risk, deload timing
-4. Provide specific, actionable coaching advice
-5. Always reference actual numbers from their workouts
-
-Be concise, data-driven, and specific. Never generic.`
 
 // In-memory conversation store (per-process, resets on deploy)
 const conversations = new Map<string, Array<{ role: 'user' | 'assistant'; content: string }>>()
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, sessionId } = await req.json()
+    const { message, sessionId, personaKey } = await req.json()
 
     if (!message || !sessionId) {
       return new Response(JSON.stringify({ error: 'Message and sessionId required' }), {
@@ -30,6 +20,9 @@ export async function POST(req: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
       })
     }
+
+    const key: PersonaKey = personaKey && personaKey in PERSONAS ? personaKey : 'strength'
+    const systemPrompt = PERSONAS[key].prompt
 
     const history = conversations.get(sessionId) ?? []
 
@@ -62,7 +55,7 @@ export async function POST(req: NextRequest) {
           const anthropicStream = anthropic.messages.stream({
             model: 'claude-opus-4-5',
             max_tokens: 500,
-            system: COACH_SYSTEM_PROMPT,
+            system: systemPrompt,
             messages: updatedHistory,
           })
 

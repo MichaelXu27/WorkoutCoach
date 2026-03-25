@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { PERSONAS, PersonaKey } from '@/lib/personas'
 
 type Workout = {
   id?: string
@@ -45,6 +46,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
+  const [persona, setPersona] = useState<PersonaKey>('strength')
   const chatBottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -112,7 +114,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID }),
+        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID, personaKey: persona }),
       })
 
       if (!res.body) throw new Error('No response body')
@@ -287,7 +289,18 @@ export default function Home() {
 
         {tab === 'chat' && (
           <div className="flex flex-col" style={{ height: 'calc(100vh - 220px)' }}>
-            <h2 className="text-lg font-medium mb-4">Chat with your Coach</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium">Chat with your Coach</h2>
+              <select
+                value={persona}
+                onChange={(e) => setPersona(e.target.value as PersonaKey)}
+                className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
+              >
+                {(Object.entries(PERSONAS) as [PersonaKey, { label: string; prompt: string }][]).map(([key, { label }]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
             <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">
               {messages.length === 0 && (
                 <p className="text-zinc-500 text-sm">
