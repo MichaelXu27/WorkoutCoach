@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { PERSONAS, PersonaKey } from '@/lib/personas'
 
 type Workout = {
@@ -316,7 +317,7 @@ export default function Home() {
                   }`}>
                     {m.role === 'assistant' ? (
                       m.content
-                        ? <div className="md"><ReactMarkdown>{m.content}</ReactMarkdown></div>
+                        ? <div className="md"><ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown></div>
                         : <span className="opacity-40">▍</span>
                     ) : (
                       m.content

@@ -40,3 +40,7 @@ body {
 .md code { background: rgba(255,255,255,0.1); border-radius: 3px; padding: 0.1em 0.3em; font-size: 0.85em; font-family: monospace; }
 .md pre { background: rgba(0,0,0,0.3); border-radius: 6px; padding: 0.75em 1em; overflow-x: auto; margin: 0.5em 0; }
 .md pre code { background: none; padding: 0; }
+.md table { border-collapse: collapse; width: 100%; margin: 0.75em 0; font-size: 0.85em; }
+.md th, .md td { border: 1px solid rgba(255,255,255,0.15); padding: 0.4em 0.75em; text-align: left; }
+.md th { background: rgba(255,255,255,0.08); font-weight: 600; }
+.md tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
