@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { PERSONAS, PersonaKey } from '@/lib/personas'
-import type { VideoStats } from '@/lib/videoTypes'
+import { EXERCISES, EXERCISE_LABELS, type ExerciseKey, type VideoStats } from '@/lib/videoTypes'
 import VideoTracker from '@/app/components/VideoTracker'
 import StatsOverlay from '@/app/components/StatsOverlay'
 
@@ -46,6 +46,7 @@ export default function Home() {
   const [loadingWorkouts, setLoadingWorkouts] = useState(false)
   const [workoutsError, setWorkoutsError] = useState<string | null>(null)
   const [days, setDays] = useState(30)
+  const [expandedExercise, setExpandedExercise] = useState<string | null>(null)
 
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
@@ -54,6 +55,7 @@ export default function Home() {
   const chatBottomRef = useRef<HTMLDivElement>(null)
 
   const [videoStats, setVideoStats] = useState<VideoStats | null>(null)
+  const [videoExercise, setVideoExercise] = useState<ExerciseKey>('squat')
 
   useEffect(() => {
     if (tab === 'workouts') fetchWorkouts()
@@ -168,12 +170,13 @@ export default function Home() {
 
   const sendChatFromVideo = useCallback(() => {
     if (!videoStats || videoStats.repCount === 0) return
-    const msg = `I just did ${videoStats.repCount} reps of ${videoStats.exercise}. Detection confidence: ${Math.round(videoStats.confidence * 100)}%. Can you analyze my set and give me coaching tips?`
+    const exerciseName = EXERCISE_LABELS[videoExercise]
+    const msg = `I just did ${videoStats.repCount} reps of ${exerciseName}. Detection confidence: ${Math.round(videoStats.confidence * 100)}%. Can you analyze my set and give me coaching tips?`
     setPersona('movement')
     setTab('chat')
     // Small delay to let tab switch render before sending
     setTimeout(() => sendMessage(msg, 'movement'), 100)
-  }, [videoStats, streaming])
+  }, [videoStats, videoExercise, streaming])
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
@@ -278,32 +281,90 @@ export default function Home() {
             {!loadingWorkouts && !workoutsError && workouts.length === 0 && (
               <p className="text-zinc-500 text-sm">No workouts found. Upload some data first.</p>
             )}
-            {workouts.length > 0 && (
-              <div className="overflow-x-auto rounded-lg border border-zinc-800">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-zinc-800 bg-zinc-900">
-                      {['Date', 'Exercise', 'Weight', 'Reps', 'Sets', 'RPE', 'Notes'].map((h) => (
-                        <th key={h} className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase tracking-wide">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {workouts.map((w, i) => (
-                      <tr key={w.id ?? i} className="border-b border-zinc-800/50 hover:bg-zinc-900/50">
-                        <td className="px-4 py-3 text-zinc-300">{w.date}</td>
-                        <td className="px-4 py-3 text-zinc-200 font-medium">{w.exercise.replace(/_/g, ' ')}</td>
-                        <td className="px-4 py-3 text-zinc-300">{w.weight}</td>
-                        <td className="px-4 py-3 text-zinc-300">{w.reps}</td>
-                        <td className="px-4 py-3 text-zinc-300">{w.sets}</td>
-                        <td className="px-4 py-3 text-zinc-300">{w.rpe}</td>
-                        <td className="px-4 py-3 text-zinc-500">{w.notes ?? '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {workouts.length > 0 && (() => {
+              const grouped = workouts.reduce((acc, w) => {
+                (acc[w.date] ??= []).push(w)
+                return acc
+              }, {} as Record<string, Workout[]>)
+
+              return (
+                <div className="space-y-4">
+                  {Object.entries(grouped).map(([date, dayWorkouts]) => {
+                    const totalVolume = dayWorkouts.reduce((sum, w) => sum + w.weight * w.reps * w.sets, 0)
+
+                    const exerciseMap = new Map<string, { totalSets: number; bestWeight: number; bestReps: number; rows: Workout[] }>()
+                    for (const w of dayWorkouts) {
+                      const existing = exerciseMap.get(w.exercise)
+                      if (!existing) {
+                        exerciseMap.set(w.exercise, { totalSets: w.sets, bestWeight: w.weight, bestReps: w.reps, rows: [w] })
+                      } else {
+                        existing.totalSets += w.sets
+                        existing.rows.push(w)
+                        if (w.weight > existing.bestWeight || (w.weight === existing.bestWeight && w.reps > existing.bestReps)) {
+                          existing.bestWeight = w.weight
+                          existing.bestReps = w.reps
+                        }
+                      }
+                    }
+
+                    const exerciseCount = exerciseMap.size
+                    const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'short',
+                      day: 'numeric',
+                    })
+
+                    return (
+                      <div key={date} className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+                        <div className="px-5 py-4 border-b border-zinc-800/50">
+                          <p className="text-sm font-medium text-zinc-200">{formattedDate}</p>
+                          <div className="flex items-center gap-4 mt-1.5 text-xs text-zinc-500">
+                            <span>{totalVolume.toLocaleString()} lb</span>
+                            <span>{exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}</span>
+                          </div>
+                        </div>
+                        <div className="divide-y divide-zinc-800/50">
+                          <div className="flex items-center justify-between px-5 py-2">
+                            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Exercise</span>
+                            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Best Set</span>
+                          </div>
+                          {Array.from(exerciseMap.entries()).map(([exercise, agg]) => {
+                            const key = `${date}:${exercise}`
+                            const isExpanded = expandedExercise === key
+                            return (
+                              <div key={exercise}>
+                                <div
+                                  onClick={() => setExpandedExercise(isExpanded ? null : key)}
+                                  className="flex items-center justify-between px-5 py-3 hover:bg-zinc-800/30 transition-colors cursor-pointer"
+                                >
+                                  <span className="text-sm text-zinc-200">
+                                    <span className="text-zinc-500">{agg.totalSets} ×</span>{' '}
+                                    <span className="font-medium capitalize">{exercise.replace(/_/g, ' ')}</span>
+                                  </span>
+                                  <span className="text-sm text-zinc-400">
+                                    {agg.bestWeight} lb × {agg.bestReps}
+                                  </span>
+                                </div>
+                                {isExpanded && (
+                                  <div className="bg-zinc-950/50 px-5 py-2 space-y-1">
+                                    {agg.rows.map((r, idx) => (
+                                      <div key={idx} className="flex items-center justify-between text-xs text-zinc-400 py-1">
+                                        <span>Set {idx + 1}</span>
+                                        <span>{r.weight} lb × {r.reps} × {r.sets}{r.rpe ? ` @ RPE ${r.rpe}` : ''}{r.notes ? ` — ${r.notes}` : ''}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -368,11 +429,26 @@ export default function Home() {
         {/* Video tab — kept mounted but hidden to preserve camera state */}
         <div style={{ display: tab === 'video' ? 'block' : 'none' }}>
           <div className="space-y-4">
-            <h2 className="text-lg font-medium">Video Coach</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium">Video Coach</h2>
+              <div className="flex items-center gap-2">
+                <label htmlFor="exercise-select" className="text-sm text-zinc-400">Exercise</label>
+                <select
+                  id="exercise-select"
+                  value={videoExercise}
+                  onChange={(e) => setVideoExercise(e.target.value as ExerciseKey)}
+                  className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
+                >
+                  {EXERCISES.map((ex) => (
+                    <option key={ex} value={ex}>{EXERCISE_LABELS[ex]}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <p className="text-sm text-zinc-400">
               Track your reps in real-time using your webcam. Start the camera, begin tracking, and get AI coaching feedback.
             </p>
-            <VideoTracker onStatsUpdate={setVideoStats} />
+            <VideoTracker exercise={videoExercise} onStatsUpdate={setVideoStats} />
             {videoStats && videoStats.repCount > 0 && (
               <StatsOverlay stats={videoStats} onRequestCoaching={sendChatFromVideo} />
             )}

@@ -23,10 +23,10 @@ const KEYPOINT_COLOR = '#22c55e'  // green-500
 const SKELETON_COLOR = '#4ade80'  // green-400
 const LOW_CONF_COLOR = '#71717a'  // zinc-500
 
-const WS_URL = process.env.NEXT_PUBLIC_INFERENCE_WS_URL || 'ws://localhost:8000/ws/track'
+const WS_BASE_URL = process.env.NEXT_PUBLIC_INFERENCE_WS_URL || 'ws://localhost:8000/ws/track'
 const FRAME_INTERVAL_MS = 100 // 10 fps
 
-export default function VideoTracker({ onStatsUpdate }: VideoTrackerProps) {
+export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const offscreenRef = useRef<HTMLCanvasElement | null>(null)
@@ -61,7 +61,7 @@ export default function VideoTracker({ onStatsUpdate }: VideoTrackerProps) {
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return
 
-    const ws = new WebSocket(WS_URL)
+    const ws = new WebSocket(`${WS_BASE_URL}?exercise=${exercise}`)
     wsRef.current = ws
 
     ws.onopen = () => setWsConnected(true)
@@ -88,7 +88,7 @@ export default function VideoTracker({ onStatsUpdate }: VideoTrackerProps) {
       setWsConnected(false)
       setError('Inference server offline. Start the Python sidecar on port 8000.')
     }
-  }, [onStatsUpdate])
+  }, [exercise, onStatsUpdate])
 
   const drawOverlay = useCallback((keypoints: [number, number, number][]) => {
     const canvas = canvasRef.current
@@ -205,6 +205,18 @@ export default function VideoTracker({ onStatsUpdate }: VideoTrackerProps) {
       ctx?.clearRect(0, 0, canvas.width, canvas.height)
     }
   }, [stopTracking])
+
+  // Reconnect WS when exercise changes during tracking
+  useEffect(() => {
+    if (!isTracking) return
+    if (wsRef.current) {
+      wsRef.current.close()
+      wsRef.current = null
+    }
+    waitingForResponse.current = false
+    setLatestStats(null)
+    connectWebSocket()
+  }, [exercise, connectWebSocket]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Draw plain video when not getting inference results
   useEffect(() => {

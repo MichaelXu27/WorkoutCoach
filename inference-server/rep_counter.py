@@ -12,6 +12,9 @@ import math
 from dataclasses import dataclass, field
 
 
+VALID_EXERCISES = ["squat", "bicep curl", "overhead press", "lateral raise"]
+
+
 def _angle(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:
     """Angle at point b formed by segments b->a and b->c, in degrees."""
     ba = (a[0] - b[0], a[1] - b[1])
@@ -37,8 +40,9 @@ MIN_CONF = 0.4  # minimum keypoint confidence to use
 
 @dataclass
 class RepCounter:
-    """Stateful rep counter that detects exercise type and counts reps from pose keypoints."""
+    """Stateful rep counter that tracks a specific exercise and counts reps from pose keypoints."""
 
+    target_exercise: str | None = None
     count: int = 0
     phase: str = "idle"  # "up", "down", or "idle"
     exercise: str = "unknown"
@@ -46,6 +50,10 @@ class RepCounter:
     _phase_history: list[str] = field(default_factory=list)
     _angle_buffer: list[float] = field(default_factory=list)
     _frame_count: int = 0
+
+    def __post_init__(self):
+        if self.target_exercise is not None:
+            self.exercise = self.target_exercise
 
     def update(self, keypoints: list[list[float]]) -> dict:
         """Process a frame's keypoints and return current state."""
@@ -65,7 +73,7 @@ class RepCounter:
         l_ankle = _kp(keypoints, 15)
         r_ankle = _kp(keypoints, 16)
 
-        # Compute angles for exercise detection
+        # Compute all angles
         angles = {}
 
         # Elbow angles (for curls)
@@ -96,7 +104,7 @@ class RepCounter:
                 (r_ankle[0], r_ankle[1]),
             )
 
-        # Shoulder angles (for overhead press)
+        # Shoulder angles (for overhead press — hip-shoulder-elbow)
         if l_shoulder[2] > MIN_CONF and l_hip[2] > MIN_CONF and l_elbow[2] > MIN_CONF:
             angles["l_shoulder"] = _angle(
                 (l_hip[0], l_hip[1]),
@@ -110,30 +118,32 @@ class RepCounter:
                 (r_elbow[0], r_elbow[1]),
             )
 
-        # Detect exercise and primary angle
+        # Abduction angles (for lateral raise — hip-shoulder-wrist)
+        if l_shoulder[2] > MIN_CONF and l_hip[2] > MIN_CONF and l_wrist[2] > MIN_CONF:
+            angles["l_abduction"] = _angle(
+                (l_hip[0], l_hip[1]),
+                (l_shoulder[0], l_shoulder[1]),
+                (l_wrist[0], l_wrist[1]),
+            )
+        if r_shoulder[2] > MIN_CONF and r_hip[2] > MIN_CONF and r_wrist[2] > MIN_CONF:
+            angles["r_abduction"] = _angle(
+                (r_hip[0], r_hip[1]),
+                (r_shoulder[0], r_shoulder[1]),
+                (r_wrist[0], r_wrist[1]),
+            )
+
+        # Get primary angle based on target exercise (no auto-detection)
         primary_angle = 0.0
-        exercise = self.exercise
+        exercise = self.target_exercise or self.exercise
 
-        # Check for squat (knee angle changes significantly)
-        avg_knee = self._avg_angle(angles, "l_knee", "r_knee")
-        avg_elbow = self._avg_angle(angles, "l_elbow", "r_elbow")
-        avg_shoulder = self._avg_angle(angles, "l_shoulder", "r_shoulder")
-
-        if avg_knee > 0 and avg_knee < 140:
-            exercise = "squat"
-            primary_angle = avg_knee
-        elif avg_elbow > 0 and avg_elbow < 140:
-            exercise = "bicep curl"
-            primary_angle = avg_elbow
-        elif avg_shoulder > 0 and avg_shoulder > 90:
-            exercise = "overhead press"
-            primary_angle = avg_shoulder
-        elif avg_elbow > 0:
-            exercise = "bicep curl"
-            primary_angle = avg_elbow
-        elif avg_knee > 0:
-            exercise = "squat"
-            primary_angle = avg_knee
+        if exercise == "squat":
+            primary_angle = self._avg_angle(angles, "l_knee", "r_knee")
+        elif exercise == "bicep curl":
+            primary_angle = self._avg_angle(angles, "l_elbow", "r_elbow")
+        elif exercise == "overhead press":
+            primary_angle = self._avg_angle(angles, "l_shoulder", "r_shoulder")
+        elif exercise == "lateral raise":
+            primary_angle = self._avg_angle(angles, "l_abduction", "r_abduction")
 
         self.exercise = exercise
 
@@ -170,6 +180,9 @@ class RepCounter:
         elif self.exercise == "overhead press":
             down_thresh = 90   # arms at shoulder level
             up_thresh = 160    # arms overhead
+        elif self.exercise == "lateral raise":
+            down_thresh = 25   # arms at sides
+            up_thresh = 70     # arms raised to ~shoulder height
         else:
             return
 
@@ -183,7 +196,7 @@ class RepCounter:
             elif angle > up_thresh and self.phase != "down":
                 self.phase = "down"
         else:
-            # For squat/OHP: small angle = "down", large angle = "up"
+            # For squat/OHP/lateral raise: small angle = "down", large angle = "up"
             if angle < down_thresh and self.phase != "down":
                 self.phase = "down"
             elif angle > up_thresh and self.phase != "up":
@@ -196,7 +209,7 @@ class RepCounter:
         """Reset counter state."""
         self.count = 0
         self.phase = "idle"
-        self.exercise = "unknown"
+        self.exercise = self.target_exercise or "unknown"
         self._prev_angle = 0.0
         self._phase_history.clear()
         self._angle_buffer.clear()

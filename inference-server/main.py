@@ -11,7 +11,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 
-from rep_counter import RepCounter
+from rep_counter import RepCounter, VALID_EXERCISES
 
 app = FastAPI(title="WorkoutCoach Inference Server")
 
@@ -31,10 +31,18 @@ async def health():
     return {"status": "ok", "model": "yolov8n-pose"}
 
 
+@app.get("/exercises")
+async def exercises():
+    return {"exercises": VALID_EXERCISES}
+
+
 @app.websocket("/ws/track")
-async def track(ws: WebSocket):
+async def track(ws: WebSocket, exercise: str | None = None):
     await ws.accept()
-    counter = RepCounter()
+    target = exercise.replace("_", " ") if exercise else None
+    if target and target not in VALID_EXERCISES:
+        target = None
+    counter = RepCounter(target_exercise=target)
 
     try:
         while True:
