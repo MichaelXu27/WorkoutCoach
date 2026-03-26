@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { PERSONAS, PersonaKey } from '@/lib/personas'
+import type { VideoStats } from '@/lib/videoTypes'
+import VideoTracker from '@/app/components/VideoTracker'
+import StatsOverlay from '@/app/components/StatsOverlay'
 
 type Workout = {
   id?: string
@@ -32,7 +35,7 @@ const SAMPLE_CSV = `date,exercise,weight,reps,sets,rpe,notes
 2026-03-24,squat,235,5,3,9,heavy day`
 
 export default function Home() {
-  const [tab, setTab] = useState<'upload' | 'workouts' | 'chat'>('upload')
+  const [tab, setTab] = useState<'upload' | 'workouts' | 'chat' | 'video'>('upload')
 
   const [csvText, setCsvText] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -49,6 +52,8 @@ export default function Home() {
   const [streaming, setStreaming] = useState(false)
   const [persona, setPersona] = useState<PersonaKey>('strength')
   const chatBottomRef = useRef<HTMLDivElement>(null)
+
+  const [videoStats, setVideoStats] = useState<VideoStats | null>(null)
 
   useEffect(() => {
     if (tab === 'workouts') fetchWorkouts()
@@ -100,11 +105,8 @@ export default function Home() {
     }
   }
 
-  async function handleChat(e: React.FormEvent) {
-    e.preventDefault()
-    if (!input.trim() || streaming) return
-    const userMessage = input.trim()
-    setInput('')
+  async function sendMessage(userMessage: string, personaOverride?: PersonaKey) {
+    if (!userMessage.trim() || streaming) return
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }])
     setStreaming(true)
 
@@ -115,7 +117,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID, personaKey: persona }),
+        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID, personaKey: personaOverride ?? persona }),
       })
 
       if (!res.body) throw new Error('No response body')
@@ -156,6 +158,23 @@ export default function Home() {
     }
   }
 
+  function handleChat(e: React.FormEvent) {
+    e.preventDefault()
+    if (!input.trim()) return
+    const msg = input.trim()
+    setInput('')
+    sendMessage(msg)
+  }
+
+  const sendChatFromVideo = useCallback(() => {
+    if (!videoStats || videoStats.repCount === 0) return
+    const msg = `I just did ${videoStats.repCount} reps of ${videoStats.exercise}. Detection confidence: ${Math.round(videoStats.confidence * 100)}%. Can you analyze my set and give me coaching tips?`
+    setPersona('movement')
+    setTab('chat')
+    // Small delay to let tab switch render before sending
+    setTimeout(() => sendMessage(msg, 'movement'), 100)
+  }, [videoStats, streaming])
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
       <header className="border-b border-zinc-800 px-6 py-4">
@@ -164,7 +183,7 @@ export default function Home() {
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="flex gap-1 mb-8 bg-zinc-900 rounded-lg p-1 w-fit">
-          {(['upload', 'workouts', 'chat'] as const).map((t) => (
+          {(['upload', 'workouts', 'chat', 'video'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -345,6 +364,20 @@ export default function Home() {
             </form>
           </div>
         )}
+
+        {/* Video tab — kept mounted but hidden to preserve camera state */}
+        <div style={{ display: tab === 'video' ? 'block' : 'none' }}>
+          <div className="space-y-4">
+            <h2 className="text-lg font-medium">Video Coach</h2>
+            <p className="text-sm text-zinc-400">
+              Track your reps in real-time using your webcam. Start the camera, begin tracking, and get AI coaching feedback.
+            </p>
+            <VideoTracker onStatsUpdate={setVideoStats} />
+            {videoStats && videoStats.repCount > 0 && (
+              <StatsOverlay stats={videoStats} onRequestCoaching={sendChatFromVideo} />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
