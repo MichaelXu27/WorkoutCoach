@@ -5,19 +5,10 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { PERSONAS, PersonaKey } from '@/lib/personas'
 import { EXERCISES, EXERCISE_LABELS, type ExerciseKey, type VideoStats } from '@/lib/videoTypes'
+import type { Workout } from '@/lib/supabase'
 import VideoTracker from '@/app/components/VideoTracker'
 import StatsOverlay from '@/app/components/StatsOverlay'
-
-type Workout = {
-  id?: string
-  date: string
-  exercise: string
-  weight: number
-  reps: number
-  sets: number
-  rpe: number
-  notes?: string
-}
+import WorkoutCards from '@/app/components/WorkoutCards'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -35,7 +26,7 @@ const SAMPLE_CSV = `date,exercise,weight,reps,sets,rpe,notes
 2026-03-24,squat,235,5,3,9,heavy day`
 
 export default function Home() {
-  const [tab, setTab] = useState<'upload' | 'workouts' | 'chat' | 'video'>('upload')
+  const [tab, setTab] = useState<'upload' | 'workouts' | 'generate' | 'chat' | 'video'>('upload')
 
   const [csvText, setCsvText] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -56,6 +47,13 @@ export default function Home() {
 
   const [videoStats, setVideoStats] = useState<VideoStats | null>(null)
   const [videoExercise, setVideoExercise] = useState<ExerciseKey>('squat')
+
+  const [generatedWorkouts, setGeneratedWorkouts] = useState<Workout[]>([])
+  const [generatePrompt, setGeneratePrompt] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
+  const [expandedGenExercise, setExpandedGenExercise] = useState<string | null>(null)
+  const [saveResult, setSaveResult] = useState<{ success?: boolean; count?: number; error?: string } | null>(null)
 
   useEffect(() => {
     if (tab === 'workouts') fetchWorkouts()
@@ -168,6 +166,54 @@ export default function Home() {
     sendMessage(msg)
   }
 
+  const WORKOUT_PRESETS = [
+    { label: 'Push Day', prompt: 'Generate a push day workout (chest, shoulders, triceps)' },
+    { label: 'Pull Day', prompt: 'Generate a pull day workout (back, biceps)' },
+    { label: 'Leg Day', prompt: 'Generate a leg day workout (quads, hamstrings, glutes)' },
+    { label: 'Full Body', prompt: 'Generate a full body workout' },
+    { label: 'Upper Body', prompt: 'Generate an upper body workout' },
+    { label: 'Lower Body', prompt: 'Generate a lower body workout' },
+  ]
+
+  async function handleGenerate(prompt: string) {
+    if (!prompt.trim() || generating) return
+    setGenerating(true)
+    setGenerateError(null)
+    setGeneratedWorkouts([])
+    setSaveResult(null)
+    try {
+      const res = await fetch('/api/generate-workout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, personaKey: persona }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Generation failed')
+      setGeneratedWorkouts(data)
+    } catch (e: unknown) {
+      setGenerateError(e instanceof Error ? e.message : 'Unknown error')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  async function handleSaveGenerated() {
+    if (generatedWorkouts.length === 0) return
+    setSaveResult(null)
+    try {
+      const res = await fetch('/api/workouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workouts: generatedWorkouts }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Save failed')
+      setSaveResult({ success: true, count: data.count })
+    } catch (e: unknown) {
+      setSaveResult({ error: e instanceof Error ? e.message : 'Save failed' })
+    }
+  }
+
   const sendChatFromVideo = useCallback(() => {
     if (!videoStats || videoStats.repCount === 0) return
     const exerciseName = EXERCISE_LABELS[videoExercise]
@@ -186,7 +232,7 @@ export default function Home() {
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="flex gap-1 mb-8 bg-zinc-900 rounded-lg p-1 w-fit">
-          {(['upload', 'workouts', 'chat', 'video'] as const).map((t) => (
+          {(['upload', 'workouts', 'generate', 'chat', 'video'] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -281,90 +327,99 @@ export default function Home() {
             {!loadingWorkouts && !workoutsError && workouts.length === 0 && (
               <p className="text-zinc-500 text-sm">No workouts found. Upload some data first.</p>
             )}
-            {workouts.length > 0 && (() => {
-              const grouped = workouts.reduce((acc, w) => {
-                (acc[w.date] ??= []).push(w)
-                return acc
-              }, {} as Record<string, Workout[]>)
+            {workouts.length > 0 && (
+              <WorkoutCards
+                workouts={workouts}
+                expandedExercise={expandedExercise}
+                onToggleExercise={(key) => setExpandedExercise(expandedExercise === key ? null : key)}
+              />
+            )}
+          </div>
+        )}
 
-              return (
-                <div className="space-y-4">
-                  {Object.entries(grouped).map(([date, dayWorkouts]) => {
-                    const totalVolume = dayWorkouts.reduce((sum, w) => sum + w.weight * w.reps * w.sets, 0)
-
-                    const exerciseMap = new Map<string, { totalSets: number; bestWeight: number; bestReps: number; rows: Workout[] }>()
-                    for (const w of dayWorkouts) {
-                      const existing = exerciseMap.get(w.exercise)
-                      if (!existing) {
-                        exerciseMap.set(w.exercise, { totalSets: w.sets, bestWeight: w.weight, bestReps: w.reps, rows: [w] })
-                      } else {
-                        existing.totalSets += w.sets
-                        existing.rows.push(w)
-                        if (w.weight > existing.bestWeight || (w.weight === existing.bestWeight && w.reps > existing.bestReps)) {
-                          existing.bestWeight = w.weight
-                          existing.bestReps = w.reps
-                        }
-                      }
-                    }
-
-                    const exerciseCount = exerciseMap.size
-                    const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'short',
-                      day: 'numeric',
-                    })
-
-                    return (
-                      <div key={date} className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-                        <div className="px-5 py-4 border-b border-zinc-800/50">
-                          <p className="text-sm font-medium text-zinc-200">{formattedDate}</p>
-                          <div className="flex items-center gap-4 mt-1.5 text-xs text-zinc-500">
-                            <span>{totalVolume.toLocaleString()} lb</span>
-                            <span>{exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}</span>
-                          </div>
-                        </div>
-                        <div className="divide-y divide-zinc-800/50">
-                          <div className="flex items-center justify-between px-5 py-2">
-                            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Exercise</span>
-                            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Best Set</span>
-                          </div>
-                          {Array.from(exerciseMap.entries()).map(([exercise, agg]) => {
-                            const key = `${date}:${exercise}`
-                            const isExpanded = expandedExercise === key
-                            return (
-                              <div key={exercise}>
-                                <div
-                                  onClick={() => setExpandedExercise(isExpanded ? null : key)}
-                                  className="flex items-center justify-between px-5 py-3 hover:bg-zinc-800/30 transition-colors cursor-pointer"
-                                >
-                                  <span className="text-sm text-zinc-200">
-                                    <span className="text-zinc-500">{agg.totalSets} ×</span>{' '}
-                                    <span className="font-medium capitalize">{exercise.replace(/_/g, ' ')}</span>
-                                  </span>
-                                  <span className="text-sm text-zinc-400">
-                                    {agg.bestWeight} lb × {agg.bestReps}
-                                  </span>
-                                </div>
-                                {isExpanded && (
-                                  <div className="bg-zinc-950/50 px-5 py-2 space-y-1">
-                                    {agg.rows.map((r, idx) => (
-                                      <div key={idx} className="flex items-center justify-between text-xs text-zinc-400 py-1">
-                                        <span>Set {idx + 1}</span>
-                                        <span>{r.weight} lb × {r.reps} × {r.sets}{r.rpe ? ` @ RPE ${r.rpe}` : ''}{r.notes ? ` — ${r.notes}` : ''}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )
-                  })}
+        {tab === 'generate' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium">Generate Workout</h2>
+              <select
+                value={persona}
+                onChange={(e) => setPersona(e.target.value as PersonaKey)}
+                className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
+              >
+                {(Object.entries(PERSONAS) as [PersonaKey, { label: string; prompt: string }][]).map(([key, { label }]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-sm text-zinc-400">
+              Pick a preset or describe your ideal workout. Your coach will generate a plan based on your training history.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {WORKOUT_PRESETS.map((preset) => (
+                <button
+                  key={preset.label}
+                  onClick={() => handleGenerate(preset.prompt)}
+                  disabled={generating}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleGenerate(generatePrompt) }}
+              className="flex gap-3"
+            >
+              <input
+                value={generatePrompt}
+                onChange={(e) => setGeneratePrompt(e.target.value)}
+                placeholder="Describe a workout (e.g., heavy bench day with accessories)"
+                disabled={generating}
+                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={!generatePrompt.trim() || generating}
+                className="px-5 py-3 bg-white text-black rounded-xl text-sm font-medium hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                {generating ? 'Generating...' : 'Generate'}
+              </button>
+            </form>
+            {generating && <p className="text-zinc-400 text-sm">Generating your workout plan...</p>}
+            {generateError && (
+              <div className="rounded-lg px-4 py-3 text-sm bg-red-950 border border-red-800 text-red-300">
+                Error: {generateError}
+              </div>
+            )}
+            {generatedWorkouts.length > 0 && (
+              <>
+                <WorkoutCards
+                  workouts={generatedWorkouts}
+                  expandedExercise={expandedGenExercise}
+                  onToggleExercise={(key) => setExpandedGenExercise(expandedGenExercise === key ? null : key)}
+                />
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleSaveGenerated}
+                    disabled={saveResult?.success === true}
+                    className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {saveResult?.success ? 'Saved!' : 'Mark as Completed'}
+                  </button>
+                  <button
+                    onClick={() => { setGeneratedWorkouts([]); setSaveResult(null) }}
+                    className="px-4 py-2 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
+                  >
+                    Clear
+                  </button>
                 </div>
-              )
-            })()}
+                {saveResult && (
+                  <div className={`rounded-lg px-4 py-3 text-sm ${saveResult.error ? 'bg-red-950 border border-red-800 text-red-300' : 'bg-green-950 border border-green-800 text-green-300'}`}>
+                    {saveResult.error ? `Error: ${saveResult.error}` : `Saved ${saveResult.count} set${saveResult.count !== 1 ? 's' : ''} to your workout log`}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     const workoutContext =
       workouts.length > 0
         ? workouts
-            .slice(0, 10)
+            .slice(0, 36)
             .map(
               (w) =>
                 `${w.date}: ${w.exercise} ${w.weight}×${w.reps}×${w.sets} RPE ${w.rpe}${w.notes ? ` (${w.notes})` : ''}`
