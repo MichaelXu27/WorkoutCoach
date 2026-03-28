@@ -9,6 +9,7 @@ import type { Workout } from '@/lib/supabase'
 import VideoTracker from '@/app/components/VideoTracker'
 import StatsOverlay from '@/app/components/StatsOverlay'
 import WorkoutCards from '@/app/components/WorkoutCards'
+import AddExerciseForm from '@/app/components/AddExerciseForm'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -76,6 +77,39 @@ export default function Home() {
     } finally {
       setLoadingWorkouts(false)
     }
+  }
+
+  async function handleUpdateWorkout(id: string, fields: Partial<Workout>) {
+    const res = await fetch('/api/workouts', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...fields }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Update failed')
+    setWorkouts((prev) => prev.map((w) => (w.id === id ? { ...w, ...fields } : w)))
+  }
+
+  async function handleDeleteWorkout(id: string) {
+    const res = await fetch('/api/workouts', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Delete failed')
+    setWorkouts((prev) => prev.filter((w) => w.id !== id))
+  }
+
+  async function handleAddWorkout(workout: Omit<Workout, 'id'>) {
+    const res = await fetch('/api/workouts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workouts: [workout] }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Add failed')
+    fetchWorkouts()
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -327,11 +361,16 @@ export default function Home() {
             {!loadingWorkouts && !workoutsError && workouts.length === 0 && (
               <p className="text-zinc-500 text-sm">No workouts found. Upload some data first.</p>
             )}
+            <AddExerciseForm onAdd={handleAddWorkout} />
             {workouts.length > 0 && (
               <WorkoutCards
                 workouts={workouts}
                 expandedExercise={expandedExercise}
                 onToggleExercise={(key) => setExpandedExercise(expandedExercise === key ? null : key)}
+                editable
+                onUpdate={handleUpdateWorkout}
+                onDelete={handleDeleteWorkout}
+                onAdd={handleAddWorkout}
               />
             )}
           </div>

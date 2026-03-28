@@ -50,6 +50,25 @@ export async function getAllWorkouts() {
   return data || []
 }
 
+export async function updateWorkout(id: string, fields: Partial<Omit<Workout, 'id'>>) {
+  const { data, error } = await supabase
+    .from('workouts')
+    .update(fields)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteWorkout(id: string) {
+  const { error } = await supabase
+    .from('workouts')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
+}
+
 export async function getExerciseStats(exercise: string) {
   const { data, error } = await supabase
     .from('workouts')

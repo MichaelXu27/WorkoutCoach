@@ -1,14 +1,228 @@
 'use client'
 
+import { useState } from 'react'
 import type { Workout } from '@/lib/supabase'
 
 type WorkoutCardsProps = {
   workouts: Workout[]
   expandedExercise: string | null
   onToggleExercise: (key: string) => void
+  editable?: boolean
+  onUpdate?: (id: string, fields: Partial<Workout>) => Promise<void>
+  onDelete?: (id: string) => Promise<void>
+  onAdd?: (workout: Omit<Workout, 'id'>) => Promise<void>
 }
 
-export default function WorkoutCards({ workouts, expandedExercise, onToggleExercise }: WorkoutCardsProps) {
+function EditableSet({
+  row,
+  idx,
+  onSave,
+  onDelete,
+}: {
+  row: Workout
+  idx: number
+  onSave: (id: string, fields: Partial<Workout>) => Promise<void>
+  onDelete: (id: string) => Promise<void>
+}) {
+  const [editing, setEditing] = useState(false)
+  const [weight, setWeight] = useState(row.weight)
+  const [reps, setReps] = useState(row.reps)
+  const [rpe, setRpe] = useState(row.rpe)
+  const [notes, setNotes] = useState(row.notes ?? '')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    if (!row.id) return
+    setSaving(true)
+    try {
+      await onSave(row.id, { weight, reps, rpe, notes: notes || undefined })
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!row.id) return
+    setSaving(true)
+    try {
+      await onDelete(row.id)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2 text-xs py-1.5 px-1">
+        <span className="text-zinc-500 w-10 shrink-0">Set {idx + 1}</span>
+        <input
+          type="number"
+          value={weight}
+          onChange={(e) => setWeight(Number(e.target.value))}
+          className="w-16 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+          placeholder="lbs"
+        />
+        <span className="text-zinc-600">×</span>
+        <input
+          type="number"
+          value={reps}
+          onChange={(e) => setReps(Number(e.target.value))}
+          className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+          placeholder="reps"
+        />
+        <span className="text-zinc-600">@</span>
+        <input
+          type="number"
+          value={rpe}
+          onChange={(e) => setRpe(Number(e.target.value))}
+          className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+          placeholder="RPE"
+          min={1}
+          max={10}
+        />
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="flex-1 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs min-w-0"
+          placeholder="notes"
+        />
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="text-green-400 hover:text-green-300 disabled:opacity-40 text-xs font-medium"
+        >
+          Save
+        </button>
+        <button
+          onClick={() => {
+            setWeight(row.weight)
+            setReps(row.reps)
+            setRpe(row.rpe)
+            setNotes(row.notes ?? '')
+            setEditing(false)
+          }}
+          className="text-zinc-500 hover:text-zinc-300 text-xs"
+        >
+          Cancel
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-between text-xs text-zinc-400 py-1 group">
+      <span>Set {idx + 1}</span>
+      <div className="flex items-center gap-2">
+        <span>
+          {row.weight} lb × {row.reps}
+          {row.rpe ? ` @ RPE ${row.rpe}` : ''}
+          {row.notes ? ` — ${row.notes}` : ''}
+        </span>
+        {row.id && (
+          <div className="hidden group-hover:flex items-center gap-1">
+            <button
+              onClick={(e) => { e.stopPropagation(); setEditing(true) }}
+              className="text-zinc-600 hover:text-zinc-300 text-[10px] px-1"
+            >
+              Edit
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleDelete() }}
+              disabled={saving}
+              className="text-zinc-600 hover:text-red-400 text-[10px] px-1 disabled:opacity-40"
+            >
+              Del
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function AddSetForm({
+  date,
+  exercise,
+  onAdd,
+}: {
+  date: string
+  exercise: string
+  onAdd: (workout: Omit<Workout, 'id'>) => Promise<void>
+}) {
+  const [weight, setWeight] = useState(0)
+  const [reps, setReps] = useState(0)
+  const [rpe, setRpe] = useState(7)
+  const [notes, setNotes] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleAdd() {
+    if (weight <= 0 || reps <= 0) return
+    setSaving(true)
+    try {
+      await onAdd({ date, exercise, weight, reps, sets: 1, rpe, notes: notes || undefined })
+      setWeight(0)
+      setReps(0)
+      setNotes('')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-xs py-1.5 px-1 border-t border-zinc-800/30 mt-1">
+      <span className="text-zinc-600 w-10 shrink-0">+ Set</span>
+      <input
+        type="number"
+        value={weight || ''}
+        onChange={(e) => setWeight(Number(e.target.value))}
+        className="w-16 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+        placeholder="lbs"
+      />
+      <span className="text-zinc-600">×</span>
+      <input
+        type="number"
+        value={reps || ''}
+        onChange={(e) => setReps(Number(e.target.value))}
+        className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+        placeholder="reps"
+      />
+      <span className="text-zinc-600">@</span>
+      <input
+        type="number"
+        value={rpe}
+        onChange={(e) => setRpe(Number(e.target.value))}
+        className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+        placeholder="RPE"
+        min={1}
+        max={10}
+      />
+      <input
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        className="flex-1 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs min-w-0"
+        placeholder="notes"
+      />
+      <button
+        onClick={handleAdd}
+        disabled={saving || weight <= 0 || reps <= 0}
+        className="text-blue-400 hover:text-blue-300 disabled:opacity-40 text-xs font-medium"
+      >
+        Add
+      </button>
+    </div>
+  )
+}
+
+export default function WorkoutCards({
+  workouts,
+  expandedExercise,
+  onToggleExercise,
+  editable = false,
+  onUpdate,
+  onDelete,
+  onAdd,
+}: WorkoutCardsProps) {
   const grouped = workouts.reduce((acc, w) => {
     (acc[w.date] ??= []).push(w)
     return acc
@@ -74,12 +288,21 @@ export default function WorkoutCards({ workouts, expandedExercise, onToggleExerc
                     </div>
                     {isExpanded && (
                       <div className="bg-zinc-950/50 px-5 py-2 space-y-1">
-                        {agg.rows.map((r, idx) => (
-                          <div key={idx} className="flex items-center justify-between text-xs text-zinc-400 py-1">
-                            <span>Set {idx + 1}</span>
-                            <span>{r.weight} lb × {r.reps} × {r.sets}{r.rpe ? ` @ RPE ${r.rpe}` : ''}{r.notes ? ` — ${r.notes}` : ''}</span>
-                          </div>
-                        ))}
+                        {editable && onUpdate && onDelete ? (
+                          agg.rows.map((r, idx) => (
+                            <EditableSet key={r.id ?? idx} row={r} idx={idx} onSave={onUpdate} onDelete={onDelete} />
+                          ))
+                        ) : (
+                          agg.rows.map((r, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-xs text-zinc-400 py-1">
+                              <span>Set {idx + 1}</span>
+                              <span>{r.weight} lb × {r.reps} × {r.sets}{r.rpe ? ` @ RPE ${r.rpe}` : ''}{r.notes ? ` — ${r.notes}` : ''}</span>
+                            </div>
+                          ))
+                        )}
+                        {editable && onAdd && (
+                          <AddSetForm date={date} exercise={exercise} onAdd={onAdd} />
+                        )}
                       </div>
                     )}
                   </div>
