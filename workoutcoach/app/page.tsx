@@ -10,6 +10,7 @@ import VideoTracker from '@/app/components/VideoTracker'
 import StatsOverlay from '@/app/components/StatsOverlay'
 import WorkoutCards from '@/app/components/WorkoutCards'
 import AddExerciseForm from '@/app/components/AddExerciseForm'
+import LandingHero from '@/app/components/LandingHero'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -27,7 +28,7 @@ const SAMPLE_CSV = `date,exercise,weight,reps,sets,rpe,notes
 2026-03-24,squat,235,5,3,9,heavy day`
 
 export default function Home() {
-  const [tab, setTab] = useState<'upload' | 'workouts' | 'generate' | 'chat' | 'video'>('upload')
+  const [tab, setTab] = useState<'home' | 'upload' | 'workouts' | 'generate' | 'chat' | 'video'>('home')
 
   const [csvText, setCsvText] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -261,23 +262,30 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
       <header className="border-b border-zinc-800 px-6 py-4">
-        <h1 className="text-xl font-semibold tracking-tight">WorkoutCoach</h1>
+        <div className="max-w-[1400px] mx-auto flex items-center gap-6">
+          <h1 className="text-xl font-semibold tracking-tight shrink-0">WorkoutCoach</h1>
+          <div className="flex gap-1 bg-zinc-900 rounded-lg p-1 w-fit overflow-x-auto">
+            {(['home', 'upload', 'workouts', 'generate', 'chat', 'video'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize whitespace-nowrap ${
+                  tab === t ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
+      {tab === 'home' && (
+        <LandingHero onGetStarted={() => setTab('upload')} />
+      )}
+
+      {tab !== 'home' && (
       <div className="max-w-3xl mx-auto px-6 py-8">
-        <div className="flex gap-1 mb-8 bg-zinc-900 rounded-lg p-1 w-fit">
-          {(['upload', 'workouts', 'generate', 'chat', 'video'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize ${
-                tab === t ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
 
         {tab === 'upload' && (
           <div className="space-y-6">
@@ -549,6 +557,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }
