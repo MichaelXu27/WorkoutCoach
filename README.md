@@ -55,18 +55,21 @@ The inference server runs at `http://localhost:8000`.
 
 ### 4. Database setup
 
-Create a `workouts` table in your Supabase project:
+In your Supabase project, go to **SQL Editor** and run the following query to create the `workouts` table:
 
-| Column     | Type    | Notes                          |
-| ---------- | ------- | ------------------------------ |
-| `id`       | uuid    | Primary key, auto-generated    |
-| `date`     | text    | Format: YYYY-MM-DD             |
-| `exercise` | text    | Lowercase with underscores     |
-| `weight`   | numeric |                                |
-| `reps`     | integer |                                |
-| `sets`     | integer |                                |
-| `rpe`      | numeric | 1–10 scale                     |
-| `notes`    | text    | Optional                       |
+```sql
+CREATE TABLE workouts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  date DATE NOT NULL,
+  exercise VARCHAR(100) NOT NULL,
+  weight DECIMAL(10,2) NOT NULL,
+  reps INTEGER NOT NULL,
+  sets INTEGER NOT NULL,
+  rpe INTEGER NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
 
 ---
 
@@ -157,5 +160,3 @@ WorkoutCoach/
 | `NEXT_PUBLIC_SUPABASE_URL`         | `.env.local` | Yes      | Supabase project URL                             |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY`    | `.env.local` | Yes      | Supabase anonymous key                           |
 | `ANTHROPIC_API_KEY`                | `.env.local` | Yes      | Anthropic API key for Claude                     |
-| `NEXT_PUBLIC_INFERENCE_WS_URL`     | `.env.local` | No       | WebSocket URL for inference server (default: `ws://localhost:8000/ws/track`) |
-| `CORS_ORIGINS`                     | Shell env    | No       | Comma-separated allowed origins for inference server (default: `http://localhost:3000,http://localhost:3001`) |
