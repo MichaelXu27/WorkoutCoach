@@ -11,6 +11,7 @@ import StatsOverlay from '@/app/components/StatsOverlay'
 import WorkoutCards from '@/app/components/WorkoutCards'
 import AddExerciseForm from '@/app/components/AddExerciseForm'
 import LandingHero from '@/app/components/LandingHero'
+import InsightsTab from '@/app/components/insights/InsightsTab'
 
 type Message = {
   role: 'user' | 'assistant'
@@ -35,7 +36,7 @@ export type UserProfile = {
 }
 
 export default function Home() {
-  const [tab, setTab] = useState<'home' | 'upload' | 'workouts' | 'generate' | 'chat' | 'video'>('home')
+  const [tab, setTab] = useState<'home' | 'upload' | 'workouts' | 'insights' | 'generate' | 'chat' | 'video'>('home')
 
   const [csvText, setCsvText] = useState('')
   const [uploading, setUploading] = useState(false)
@@ -289,7 +290,7 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto flex items-center gap-6">
           <h1 className="text-lg font-semibold tracking-tight shrink-0 text-zinc-100">WorkoutCoach</h1>
           <div className="flex gap-1 bg-zinc-900/80 border border-zinc-800/40 rounded-xl p-1 w-fit overflow-x-auto">
-            {(['home', 'upload', 'workouts', 'generate', 'chat', 'video'] as const).map((t) => (
+            {(['home', 'upload', 'workouts', 'insights', 'generate', 'chat', 'video'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
@@ -310,7 +311,11 @@ export default function Home() {
         <LandingHero onGetStarted={() => setTab('upload')} />
       )}
 
-      {tab !== 'home' && (
+      {tab === 'insights' && (
+        <InsightsTab onNavigate={(t) => setTab(t as typeof tab)} />
+      )}
+
+      {tab !== 'home' && tab !== 'insights' && (
       <div className="max-w-3xl mx-auto px-6 py-8">
 
         {tab === 'upload' && (
