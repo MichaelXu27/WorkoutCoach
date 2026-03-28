@@ -122,7 +122,7 @@ export function useInsightsData() {
   const volumeByDay = useMemo<VolumeDay[]>(() => {
     const vol: Record<string, number> = {}
     for (const w of workouts) {
-      vol[w.date] = (vol[w.date] || 0) + w.weight * w.reps * w.sets
+      vol[w.date] = (vol[w.date] || 0) + w.weight * w.reps
     }
     return Object.entries(vol)
       .map(([date, volume]) => ({ date, volume }))
@@ -134,7 +134,7 @@ export function useInsightsData() {
     for (const w of workouts) {
       if (!stats[w.exercise]) stats[w.exercise] = { count: 0, volume: 0 }
       stats[w.exercise].count += 1
-      stats[w.exercise].volume += w.weight * w.reps * w.sets
+      stats[w.exercise].volume += w.weight * w.reps
     }
     return Object.entries(stats)
       .map(([exercise, s]) => ({ exercise, ...s }))
@@ -179,7 +179,7 @@ export function useInsightsData() {
     const vol: Record<string, number> = {}
     for (const w of workouts) {
       const week = getISOWeek(w.date)
-      vol[week] = (vol[week] || 0) + w.weight * w.reps * w.sets
+      vol[week] = (vol[week] || 0) + w.weight * w.reps
     }
     return Object.entries(vol)
       .map(([week, volume]) => ({ week, volume }))

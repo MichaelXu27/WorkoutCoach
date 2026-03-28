@@ -51,7 +51,7 @@ Generate a workout plan based on the user's request. Return ONLY a valid JSON ar
 - exercise: string (lowercase, underscores for spaces, e.g. "bench_press", "lat_pulldown")
 - weight: number (in lbs, based on the user's recent history when available)
 - reps: number
-- sets: number (the set number, e.g. 1, 2, 3)
+- sets: number (always 1 — each object represents a single set)
 - rpe: number (1-10 scale)
 - notes: string (brief coaching cue or empty string)
 

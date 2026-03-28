@@ -231,15 +231,15 @@ export default function WorkoutCards({
   return (
     <div className="space-y-4">
       {Object.entries(grouped).map(([date, dayWorkouts]) => {
-        const totalVolume = dayWorkouts.reduce((sum, w) => sum + w.weight * w.reps * w.sets, 0)
+        const totalVolume = dayWorkouts.reduce((sum, w) => sum + w.weight * w.reps, 0)
 
         const exerciseMap = new Map<string, { totalSets: number; bestWeight: number; bestReps: number; rows: Workout[] }>()
         for (const w of dayWorkouts) {
           const existing = exerciseMap.get(w.exercise)
           if (!existing) {
-            exerciseMap.set(w.exercise, { totalSets: w.sets, bestWeight: w.weight, bestReps: w.reps, rows: [w] })
+            exerciseMap.set(w.exercise, { totalSets: 1, bestWeight: w.weight, bestReps: w.reps, rows: [w] })
           } else {
-            existing.totalSets += w.sets
+            existing.totalSets += 1
             existing.rows.push(w)
             if (w.weight > existing.bestWeight || (w.weight === existing.bestWeight && w.reps > existing.bestReps)) {
               existing.bestWeight = w.weight
@@ -296,7 +296,7 @@ export default function WorkoutCards({
                           agg.rows.map((r, idx) => (
                             <div key={idx} className="flex items-center justify-between text-xs text-zinc-400 py-1">
                               <span>Set {idx + 1}</span>
-                              <span>{r.weight} lb × {r.reps} × {r.sets}{r.rpe ? ` @ RPE ${r.rpe}` : ''}{r.notes ? ` — ${r.notes}` : ''}</span>
+                              <span>{r.weight} lb × {r.reps}{r.rpe ? ` @ RPE ${r.rpe}` : ''}{r.notes ? ` — ${r.notes}` : ''}</span>
                             </div>
                           ))
                         )}
