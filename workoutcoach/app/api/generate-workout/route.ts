@@ -9,7 +9,7 @@ const anthropic = new Anthropic({
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, personaKey } = await req.json()
+    const { prompt, personaKey, userProfile } = await req.json()
 
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
@@ -17,6 +17,15 @@ export async function POST(req: NextRequest) {
 
     const key: PersonaKey = personaKey && personaKey in PERSONAS ? personaKey : 'strength'
     const personaLabel = PERSONAS[key].label
+
+    const profileParts: string[] = []
+    if (userProfile?.height) profileParts.push(`Height: ${userProfile.height}`)
+    if (userProfile?.weight) profileParts.push(`Body weight: ${userProfile.weight} lbs`)
+    if (userProfile?.gender) profileParts.push(`Gender: ${userProfile.gender}`)
+    if (userProfile?.age) profileParts.push(`Age: ${userProfile.age}`)
+    const profileContext = profileParts.length > 0
+      ? `\nUser profile:\n${profileParts.join('\n')}\n`
+      : ''
 
     const workouts = await getRecentWorkouts(30)
     const workoutContext =
@@ -33,7 +42,7 @@ export async function POST(req: NextRequest) {
     const today = new Date().toISOString().split('T')[0]
 
     const systemPrompt = `You are a ${personaLabel} generating a structured workout plan.
-
+${profileContext}
 The user's recent training history:
 ${workoutContext}
 
@@ -46,7 +55,7 @@ Generate a workout plan based on the user's request. Return ONLY a valid JSON ar
 - rpe: number (1-10 scale)
 - notes: string (brief coaching cue or empty string)
 
-Create multiple entries per exercise (one per set) so the user can see each individual set. Match the user's typical working weights from their history when possible. If no history exists for an exercise, use conservative estimates.`
+Create multiple entries per exercise (one per set) so the user can see each individual set. Match the user's typical working weights from their history when possible. If no history exists for an exercise, use conservative estimates based on height, weight, age, and gender.`
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',

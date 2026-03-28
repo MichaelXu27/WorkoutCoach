@@ -12,7 +12,7 @@ const conversations = new Map<string, Array<{ role: 'user' | 'assistant'; conten
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, sessionId, personaKey } = await req.json()
+    const { message, sessionId, personaKey, userProfile } = await req.json()
 
     if (!message || !sessionId) {
       return new Response(JSON.stringify({ error: 'Message and sessionId required' }), {
@@ -22,7 +22,18 @@ export async function POST(req: NextRequest) {
     }
 
     const key: PersonaKey = personaKey && personaKey in PERSONAS ? personaKey : 'strength'
-    const systemPrompt = PERSONAS[key].prompt
+    const basePrompt = PERSONAS[key].prompt
+
+    const profileParts: string[] = []
+    if (userProfile?.height) profileParts.push(`Height: ${userProfile.height}`)
+    if (userProfile?.weight) profileParts.push(`Body weight: ${userProfile.weight} lbs`)
+    if (userProfile?.gender) profileParts.push(`Gender: ${userProfile.gender}`)
+    if (userProfile?.age) profileParts.push(`Age: ${userProfile.age}`)
+    const profileContext = profileParts.length > 0
+      ? `\n\nUser profile:\n${profileParts.join('\n')}\n\nUse this information to tailor your advice (e.g. relative strength, body composition considerations, weight recommendations).`
+      : ''
+
+    const systemPrompt = basePrompt + profileContext
 
     const history = conversations.get(sessionId) ?? []
 

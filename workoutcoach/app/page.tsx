@@ -27,6 +27,13 @@ const SAMPLE_CSV = `date,exercise,weight,reps,sets,rpe,notes
 2026-03-24,bench press,190,5,3,9,
 2026-03-24,squat,235,5,3,9,heavy day`
 
+export type UserProfile = {
+  height: string
+  weight: string
+  gender: string
+  age: string
+}
+
 export default function Home() {
   const [tab, setTab] = useState<'home' | 'upload' | 'workouts' | 'generate' | 'chat' | 'video'>('home')
 
@@ -34,6 +41,23 @@ export default function Home() {
   const [uploading, setUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState<{ success?: boolean; count?: number; error?: string } | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const [userProfile, setUserProfile] = useState<UserProfile>({ height: '', weight: '', gender: '', age: '' })
+
+  useEffect(() => {
+    const saved = localStorage.getItem('userProfile')
+    if (saved) {
+      try { setUserProfile(JSON.parse(saved)) } catch { /* ignore */ }
+    }
+  }, [])
+
+  function updateProfile(field: keyof UserProfile, value: string) {
+    setUserProfile((prev) => {
+      const updated = { ...prev, [field]: value }
+      localStorage.setItem('userProfile', JSON.stringify(updated))
+      return updated
+    })
+  }
 
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loadingWorkouts, setLoadingWorkouts] = useState(false)
@@ -152,7 +176,7 @@ export default function Home() {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID, personaKey: personaOverride ?? persona }),
+        body: JSON.stringify({ message: userMessage, sessionId: SESSION_ID, personaKey: personaOverride ?? persona, userProfile }),
       })
 
       if (!res.body) throw new Error('No response body')
@@ -220,7 +244,7 @@ export default function Home() {
       const res = await fetch('/api/generate-workout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, personaKey: persona }),
+        body: JSON.stringify({ prompt, personaKey: persona, userProfile }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
@@ -289,6 +313,52 @@ export default function Home() {
 
         {tab === 'upload' && (
           <div className="space-y-6">
+            <div>
+              <h2 className="text-lg font-medium mb-1">Your Profile</h2>
+              <p className="text-sm text-zinc-400 mb-3">Used by all coaches to personalize advice.</p>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="block text-xs text-zinc-400 mb-1">Height (e.g. 5&apos;10&quot;)</label>
+                  <input
+                    value={userProfile.height}
+                    onChange={(e) => updateProfile('height', e.target.value)}
+                    placeholder={'5\'10"'}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-zinc-400 mb-1">Weight (lbs)</label>
+                  <input
+                    value={userProfile.weight}
+                    onChange={(e) => updateProfile('weight', e.target.value)}
+                    placeholder="175"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-zinc-400 mb-1">Age</label>
+                  <input
+                    value={userProfile.age}
+                    onChange={(e) => updateProfile('age', e.target.value)}
+                    placeholder="25"
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-xs text-zinc-400 mb-1">Gender</label>
+                  <select
+                    value={userProfile.gender}
+                    onChange={(e) => updateProfile('gender', e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  >
+                    <option value="">Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+            </div>
             <div>
               <h2 className="text-lg font-medium mb-1">Upload Workout CSV</h2>
               <p className="text-sm text-zinc-400">
