@@ -60,7 +60,7 @@ function EditableSet({
           type="number"
           value={weight}
           onChange={(e) => setWeight(Number(e.target.value))}
-          className="w-16 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+          className="w-16 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           placeholder="lbs"
         />
         <span className="text-zinc-600">×</span>
@@ -68,7 +68,7 @@ function EditableSet({
           type="number"
           value={reps}
           onChange={(e) => setReps(Number(e.target.value))}
-          className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+          className="w-14 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           placeholder="reps"
         />
         <span className="text-zinc-600">@</span>
@@ -76,7 +76,7 @@ function EditableSet({
           type="number"
           value={rpe}
           onChange={(e) => setRpe(Number(e.target.value))}
-          className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+          className="w-14 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           placeholder="RPE"
           min={1}
           max={10}
@@ -84,13 +84,13 @@ function EditableSet({
         <input
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="flex-1 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs min-w-0"
+          className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40 min-w-0"
           placeholder="notes"
         />
         <button
           onClick={handleSave}
           disabled={saving}
-          className="text-green-400 hover:text-green-300 disabled:opacity-40 text-xs font-medium"
+          className="text-emerald-400 hover:text-emerald-300 disabled:opacity-40 text-xs font-medium"
         >
           Save
         </button>
@@ -176,7 +176,7 @@ function AddSetForm({
         type="number"
         value={weight || ''}
         onChange={(e) => setWeight(Number(e.target.value))}
-        className="w-16 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+        className="w-16 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
         placeholder="lbs"
       />
       <span className="text-zinc-600">×</span>
@@ -184,7 +184,7 @@ function AddSetForm({
         type="number"
         value={reps || ''}
         onChange={(e) => setReps(Number(e.target.value))}
-        className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+        className="w-14 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
         placeholder="reps"
       />
       <span className="text-zinc-600">@</span>
@@ -192,7 +192,7 @@ function AddSetForm({
         type="number"
         value={rpe}
         onChange={(e) => setRpe(Number(e.target.value))}
-        className="w-14 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs"
+        className="w-14 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
         placeholder="RPE"
         min={1}
         max={10}
@@ -200,13 +200,13 @@ function AddSetForm({
       <input
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        className="flex-1 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-zinc-200 text-xs min-w-0"
+        className="flex-1 bg-zinc-900/80 border border-zinc-700/50 rounded-lg px-2 py-1 text-zinc-200 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/40 min-w-0"
         placeholder="notes"
       />
       <button
         onClick={handleAdd}
         disabled={saving || weight <= 0 || reps <= 0}
-        className="text-blue-400 hover:text-blue-300 disabled:opacity-40 text-xs font-medium"
+        className="text-emerald-400 hover:text-emerald-300 disabled:opacity-40 text-xs font-medium"
       >
         Add
       </button>
@@ -256,15 +256,15 @@ export default function WorkoutCards({
         })
 
         return (
-          <div key={date} className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-            <div className="px-5 py-4 border-b border-zinc-800/50">
-              <p className="text-sm font-medium text-zinc-200">{formattedDate}</p>
+          <div key={date} className="bg-zinc-900/60 border border-zinc-800/50 rounded-2xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-zinc-800/30">
+              <p className="text-sm font-semibold tracking-tight text-zinc-200">{formattedDate}</p>
               <div className="flex items-center gap-4 mt-1.5 text-xs text-zinc-500">
-                <span>{totalVolume.toLocaleString()} lb</span>
+                <span className="font-mono">{totalVolume.toLocaleString()} lb</span>
                 <span>{exerciseCount} exercise{exerciseCount !== 1 ? 's' : ''}</span>
               </div>
             </div>
-            <div className="divide-y divide-zinc-800/50">
+            <div className="divide-y divide-zinc-800/30">
               <div className="flex items-center justify-between px-5 py-2">
                 <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Exercise</span>
                 <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Best Set</span>
@@ -282,7 +282,7 @@ export default function WorkoutCards({
                         <span className="text-zinc-500">{agg.totalSets} ×</span>{' '}
                         <span className="font-medium capitalize">{exercise.replace(/_/g, ' ')}</span>
                       </span>
-                      <span className="text-sm text-zinc-400">
+                      <span className="text-sm text-zinc-400 font-mono">
                         {agg.bestWeight} lb × {agg.bestReps}
                       </span>
                     </div>

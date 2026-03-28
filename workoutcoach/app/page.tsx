@@ -285,16 +285,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
-      <header className="border-b border-zinc-800 px-6 py-4">
+      <header className="border-b border-zinc-800/60 px-6 py-3.5">
         <div className="max-w-[1400px] mx-auto flex items-center gap-6">
-          <h1 className="text-xl font-semibold tracking-tight shrink-0">WorkoutCoach</h1>
-          <div className="flex gap-1 bg-zinc-900 rounded-lg p-1 w-fit overflow-x-auto">
+          <h1 className="text-lg font-semibold tracking-tight shrink-0 text-zinc-100">WorkoutCoach</h1>
+          <div className="flex gap-1 bg-zinc-900/80 border border-zinc-800/40 rounded-xl p-1 w-fit overflow-x-auto">
             {(['home', 'upload', 'workouts', 'generate', 'chat', 'video'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize whitespace-nowrap ${
-                  tab === t ? 'bg-zinc-700 text-white' : 'text-zinc-400 hover:text-zinc-200'
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize whitespace-nowrap ${
+                  tab === t
+                    ? 'bg-zinc-800 text-zinc-100 shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
                 {t}
@@ -314,7 +316,7 @@ export default function Home() {
         {tab === 'upload' && (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-medium mb-1">Your Profile</h2>
+              <h2 className="text-lg font-semibold tracking-tight mb-1">Your Profile</h2>
               <p className="text-sm text-zinc-400 mb-3">Used by all coaches to personalize advice.</p>
               <div className="flex gap-3">
                 <div className="flex-1">
@@ -323,7 +325,7 @@ export default function Home() {
                     value={userProfile.height}
                     onChange={(e) => updateProfile('height', e.target.value)}
                     placeholder={'5\'10"'}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                    className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                   />
                 </div>
                 <div className="flex-1">
@@ -332,7 +334,7 @@ export default function Home() {
                     value={userProfile.weight}
                     onChange={(e) => updateProfile('weight', e.target.value)}
                     placeholder="175"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                    className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                   />
                 </div>
                 <div className="flex-1">
@@ -341,7 +343,7 @@ export default function Home() {
                     value={userProfile.age}
                     onChange={(e) => updateProfile('age', e.target.value)}
                     placeholder="25"
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                    className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                   />
                 </div>
                 <div className="flex-1">
@@ -349,7 +351,7 @@ export default function Home() {
                   <select
                     value={userProfile.gender}
                     onChange={(e) => updateProfile('gender', e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                    className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
                   >
                     <option value="">Select</option>
                     <option value="male">Male</option>
@@ -360,7 +362,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <h2 className="text-lg font-medium mb-1">Upload Workout CSV</h2>
+              <h2 className="text-lg font-semibold tracking-tight mb-1">Upload Workout CSV</h2>
               <p className="text-sm text-zinc-400">
                 Supports Strong app exports or generic format: <code className="text-zinc-300">date, exercise, weight, reps, sets</code>
               </p>
@@ -369,7 +371,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-2 bg-zinc-900 border border-zinc-800/60 hover:bg-zinc-800 rounded-xl text-sm font-medium transition-all active:scale-[0.98]"
                 >
                   Choose file
                 </button>
@@ -381,14 +383,14 @@ export default function Home() {
                 onChange={(e) => setCsvText(e.target.value)}
                 placeholder={SAMPLE_CSV}
                 rows={10}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-sm font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500 resize-none"
+                className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-4 py-3 text-sm font-mono text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500 resize-none"
               />
             </div>
             <div className="flex items-center gap-4">
               <button
                 onClick={handleUpload}
                 disabled={!csvText.trim() || uploading}
-                className="px-5 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-5 py-2 bg-zinc-100 text-zinc-950 rounded-xl text-sm font-medium hover:bg-white active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 {uploading ? 'Uploading...' : 'Upload'}
               </button>
@@ -400,7 +402,7 @@ export default function Home() {
               </button>
             </div>
             {uploadResult && (
-              <div className={`rounded-lg px-4 py-3 text-sm ${uploadResult.error ? 'bg-red-950 border border-red-800 text-red-300' : 'bg-green-950 border border-green-800 text-green-300'}`}>
+              <div className={`rounded-lg px-4 py-3 text-sm ${uploadResult.error ? 'bg-red-950 border border-red-800 text-red-300' : 'bg-emerald-950/60 border border-emerald-800/50 text-emerald-300'}`}>
                 {uploadResult.error ? `Error: ${uploadResult.error}` : `Uploaded ${uploadResult.count} workout${uploadResult.count !== 1 ? 's' : ''} successfully`}
               </div>
             )}
@@ -410,12 +412,12 @@ export default function Home() {
         {tab === 'workouts' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Recent Workouts</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Recent Workouts</h2>
               <div className="flex items-center gap-3">
                 <select
                   value={days}
                   onChange={(e) => setDays(Number(e.target.value))}
-                  className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
+                  className="bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
                 >
                   <option value={7}>Last 7 days</option>
                   <option value={14}>Last 14 days</option>
@@ -424,7 +426,7 @@ export default function Home() {
                 </select>
                 <button
                   onClick={fetchWorkouts}
-                  className="px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-colors"
+                  className="px-4 py-1.5 bg-zinc-900 border border-zinc-800/60 hover:bg-zinc-800 rounded-xl text-sm font-medium transition-all active:scale-[0.98]"
                 >
                   Refresh
                 </button>
@@ -432,7 +434,7 @@ export default function Home() {
             </div>
             {loadingWorkouts && <p className="text-zinc-400 text-sm">Loading...</p>}
             {workoutsError && (
-              <div className="rounded-lg px-4 py-3 text-sm bg-red-950 border border-red-800 text-red-300">
+              <div className="rounded-xl px-4 py-3 text-sm bg-red-950/60 border border-red-800/50 text-red-300">
                 Error: {workoutsError}
               </div>
             )}
@@ -457,11 +459,11 @@ export default function Home() {
         {tab === 'generate' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Generate Workout</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Generate Workout</h2>
               <select
                 value={persona}
                 onChange={(e) => setPersona(e.target.value as PersonaKey)}
-                className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
+                className="bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
               >
                 {(Object.entries(PERSONAS) as [PersonaKey, { label: string; prompt: string }][]).map(([key, { label }]) => (
                   <option key={key} value={key}>{label}</option>
@@ -477,7 +479,7 @@ export default function Home() {
                   key={preset.label}
                   onClick={() => handleGenerate(preset.prompt)}
                   disabled={generating}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-zinc-900/80 border border-zinc-800/50 hover:bg-zinc-800 hover:border-zinc-700/50 rounded-xl text-sm font-medium transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {preset.label}
                 </button>
@@ -492,19 +494,19 @@ export default function Home() {
                 onChange={(e) => setGeneratePrompt(e.target.value)}
                 placeholder="Describe a workout (e.g., heavy bench day with accessories)"
                 disabled={generating}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:opacity-50"
+                className="flex-1 bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={!generatePrompt.trim() || generating}
-                className="px-5 py-3 bg-white text-black rounded-xl text-sm font-medium hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-5 py-3 bg-zinc-100 text-zinc-950 rounded-xl text-sm font-medium hover:bg-white active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 {generating ? 'Generating...' : 'Generate'}
               </button>
             </form>
             {generating && <p className="text-zinc-400 text-sm">Generating your workout plan...</p>}
             {generateError && (
-              <div className="rounded-lg px-4 py-3 text-sm bg-red-950 border border-red-800 text-red-300">
+              <div className="rounded-xl px-4 py-3 text-sm bg-red-950/60 border border-red-800/50 text-red-300">
                 Error: {generateError}
               </div>
             )}
@@ -519,7 +521,7 @@ export default function Home() {
                   <button
                     onClick={handleSaveGenerated}
                     disabled={saveResult?.success === true}
-                    className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-500 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     {saveResult?.success ? 'Saved!' : 'Mark as Completed'}
                   </button>
@@ -531,7 +533,7 @@ export default function Home() {
                   </button>
                 </div>
                 {saveResult && (
-                  <div className={`rounded-lg px-4 py-3 text-sm ${saveResult.error ? 'bg-red-950 border border-red-800 text-red-300' : 'bg-green-950 border border-green-800 text-green-300'}`}>
+                  <div className={`rounded-lg px-4 py-3 text-sm ${saveResult.error ? 'bg-red-950 border border-red-800 text-red-300' : 'bg-emerald-950/60 border border-emerald-800/50 text-emerald-300'}`}>
                     {saveResult.error ? `Error: ${saveResult.error}` : `Saved ${saveResult.count} set${saveResult.count !== 1 ? 's' : ''} to your workout log`}
                   </div>
                 )}
@@ -543,11 +545,11 @@ export default function Home() {
         {tab === 'chat' && (
           <div className="flex flex-col" style={{ height: 'calc(100vh - 220px)' }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium">Chat with your Coach</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Chat with your Coach</h2>
               <select
                 value={persona}
                 onChange={(e) => setPersona(e.target.value as PersonaKey)}
-                className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
+                className="bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
               >
                 {(Object.entries(PERSONAS) as [PersonaKey, { label: string; prompt: string }][]).map(([key, { label }]) => (
                   <option key={key} value={key}>{label}</option>
@@ -564,8 +566,8 @@ export default function Home() {
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-white text-black rounded-br-sm'
-                      : 'bg-zinc-800 text-zinc-100 rounded-bl-sm'
+                      ? 'bg-zinc-100 text-zinc-950 rounded-br-sm'
+                      : 'bg-zinc-900 border border-zinc-800/40 text-zinc-200 rounded-bl-sm'
                   }`}>
                     {m.role === 'assistant' ? (
                       m.content
@@ -585,12 +587,12 @@ export default function Home() {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about your training..."
                 disabled={streaming}
-                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:opacity-50"
+                className="flex-1 bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-4 py-3 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || streaming}
-                className="px-5 py-3 bg-white text-black rounded-xl text-sm font-medium hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-5 py-3 bg-zinc-100 text-zinc-950 rounded-xl text-sm font-medium hover:bg-white active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 {streaming ? '...' : 'Send'}
               </button>
@@ -602,14 +604,14 @@ export default function Home() {
         <div style={{ display: tab === 'video' ? 'block' : 'none' }}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-medium">Video Coach</h2>
+              <h2 className="text-lg font-semibold tracking-tight">Video Coach</h2>
               <div className="flex items-center gap-2">
                 <label htmlFor="exercise-select" className="text-sm text-zinc-400">Exercise</label>
                 <select
                   id="exercise-select"
                   value={videoExercise}
                   onChange={(e) => setVideoExercise(e.target.value as ExerciseKey)}
-                  className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
+                  className="bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-1.5 text-sm text-zinc-200 focus:outline-none"
                 >
                   {EXERCISES.map((ex) => (
                     <option key={ex} value={ex}>{EXERCISE_LABELS[ex]}</option>

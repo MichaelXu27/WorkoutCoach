@@ -251,7 +251,7 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
   return (
     <div className="space-y-4">
       {/* Video / Canvas */}
-      <div className="relative bg-zinc-900 rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+      <div className="relative bg-zinc-900/60 border border-zinc-800/50 rounded-2xl overflow-hidden" style={{ aspectRatio: '4/3' }}>
         <video
           ref={videoRef}
           playsInline
@@ -272,7 +272,7 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
         {isTracking && (
           <div className="absolute top-3 left-3 flex items-center gap-2">
             <div className={`w-2.5 h-2.5 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-            <span className="text-xs text-white/80 bg-black/50 px-2 py-0.5 rounded">
+            <span className="text-xs text-white/80 bg-zinc-950/60 px-2 py-0.5 rounded-lg">
               {wsConnected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
@@ -280,7 +280,7 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
 
         {/* Live stats badge */}
         {isTracking && latestStats && latestStats.exercise !== 'unknown' && (
-          <div className="absolute top-3 right-3 bg-black/60 rounded-lg px-3 py-2 text-right">
+          <div className="absolute top-3 right-3 bg-zinc-950/70 border border-zinc-800/30 rounded-xl px-3 py-2 text-right">
             <p className="text-xs text-zinc-400 uppercase tracking-wide">{latestStats.exercise}</p>
             <p className="text-2xl font-bold text-white">{latestStats.repCount} <span className="text-sm font-normal text-zinc-400">reps</span></p>
             <p className="text-xs text-zinc-400 capitalize">{latestStats.phase}</p>
@@ -293,7 +293,7 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
         {!cameraReady ? (
           <button
             onClick={startCamera}
-            className="px-5 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-zinc-200 transition-colors"
+            className="px-5 py-2 bg-zinc-100 text-zinc-950 rounded-xl text-sm font-medium hover:bg-white active:scale-[0.98] transition-all"
           >
             Start Camera
           </button>
@@ -301,13 +301,13 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
           <>
             <button
               onClick={startTracking}
-              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-500 transition-colors"
+              className="px-5 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-500 active:scale-[0.98] transition-all"
             >
               Start Tracking
             </button>
             <button
               onClick={stopCamera}
-              className="px-5 py-2 bg-zinc-700 text-white rounded-lg text-sm font-medium hover:bg-zinc-600 transition-colors"
+              className="px-5 py-2 bg-zinc-900/80 border border-zinc-800/50 text-white rounded-xl text-sm font-medium hover:bg-zinc-800 active:scale-[0.98] transition-all"
             >
               Stop Camera
             </button>
@@ -316,13 +316,13 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
           <>
             <button
               onClick={stopTracking}
-              className="px-5 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-500 transition-colors"
+              className="px-5 py-2 bg-red-600/90 text-white rounded-xl text-sm font-medium hover:bg-red-500 active:scale-[0.98] transition-all"
             >
               Stop Tracking
             </button>
             <button
               onClick={stopCamera}
-              className="px-5 py-2 bg-zinc-700 text-white rounded-lg text-sm font-medium hover:bg-zinc-600 transition-colors"
+              className="px-5 py-2 bg-zinc-900/80 border border-zinc-800/50 text-white rounded-xl text-sm font-medium hover:bg-zinc-800 active:scale-[0.98] transition-all"
             >
               Stop Camera
             </button>
@@ -336,7 +336,7 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg px-4 py-3 text-sm bg-red-950 border border-red-800 text-red-300">
+        <div className="rounded-xl px-4 py-3 text-sm bg-red-950/60 border border-red-800/50 text-red-300">
           {error}
         </div>
       )}

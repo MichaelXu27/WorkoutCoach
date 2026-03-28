@@ -43,8 +43,8 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
-      <h3 className="text-sm font-medium text-zinc-300">Add Exercise</h3>
+    <form onSubmit={handleSubmit} className="bg-zinc-900/60 border border-zinc-800/50 rounded-2xl p-5 space-y-4">
+      <h3 className="text-sm font-semibold tracking-tight text-zinc-300">Add Exercise</h3>
       <div className="grid grid-cols-2 gap-3">
         <div className="col-span-2 sm:col-span-1">
           <label className="block text-xs text-zinc-500 mb-1">Exercise</label>
@@ -52,7 +52,7 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
             value={exercise}
             onChange={(e) => setExercise(e.target.value)}
             placeholder="e.g. bench press"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           />
         </div>
         <div className="col-span-2 sm:col-span-1">
@@ -61,7 +61,7 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           />
         </div>
         <div>
@@ -70,7 +70,7 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
             type="number"
             value={weight || ''}
             onChange={(e) => setWeight(Number(e.target.value))}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           />
         </div>
         <div>
@@ -79,7 +79,7 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
             type="number"
             value={reps || ''}
             onChange={(e) => setReps(Number(e.target.value))}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           />
         </div>
         <div>
@@ -89,7 +89,7 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
             value={sets}
             onChange={(e) => setSets(Number(e.target.value))}
             min={1}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           />
         </div>
         <div>
@@ -100,7 +100,7 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
             onChange={(e) => setRpe(Number(e.target.value))}
             min={1}
             max={10}
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           />
         </div>
         <div className="col-span-2">
@@ -109,14 +109,14 @@ export default function AddExerciseForm({ onAdd }: AddExerciseFormProps) {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. felt strong, paused reps"
-            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            className="w-full bg-zinc-900/80 border border-zinc-800/60 rounded-xl px-3 py-2 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
           />
         </div>
       </div>
       <button
         type="submit"
         disabled={!exercise.trim() || weight <= 0 || reps <= 0 || saving}
-        className="px-5 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-zinc-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        className="px-5 py-2 bg-zinc-100 text-zinc-950 rounded-xl text-sm font-medium hover:bg-white active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
       >
         {saving ? 'Adding...' : 'Add to Log'}
       </button>
