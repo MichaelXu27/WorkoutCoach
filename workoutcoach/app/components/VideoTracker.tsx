@@ -61,7 +61,7 @@ export default function VideoTracker({ exercise, onStatsUpdate }: VideoTrackerPr
   const connectWebSocket = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return
 
-    const ws = new WebSocket(`${WS_BASE_URL}?exercise=${exercise}`)
+    const ws = new WebSocket(`${WS_BASE_URL}?exercise=${exercise}&ngrok-skip-browser-warning=true`)
     wsRef.current = ws
 
     ws.onopen = () => setWsConnected(true)
